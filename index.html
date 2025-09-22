@@ -181,55 +181,6 @@
             </div>
         </div>
 
-        <!-- Module Integration -->
-        <div class="diagram-section">
-            <div class="diagram-title">3. Module Integration Architecture</div>
-            <div class="mermaid">
-                graph LR
-                    subgraph "Authentication Core"
-                        AC[Auth Controller]
-                        UP[User Provider]
-                        RP[Role Provider]
-                        PP[Permission Provider]
-                    end
-                    
-                    subgraph "HRMS Module"
-                        HM[HRMS Manager]
-                        HV[HRMS Views]
-                        HS[HRMS Services]
-                    end
-                    
-                    subgraph "ERP Module"
-                        EM[ERP Manager]
-                        EV[ERP Views]
-                        ES[ERP Services]
-                    end
-                    
-                    subgraph "CMS Module"
-                        CM[CMS Manager]
-                        CV[CMS Views]
-                        CS[CMS Services]
-                    end
-                    
-                    subgraph "Event Bus"
-                        EB[Django Signals]
-                    end
-                    
-                    UP --> HM
-                    UP --> EM
-                    UP --> CM
-                    RP --> HV
-                    RP --> EV
-                    RP --> CV
-                    
-                    HS --> EB
-                    ES --> EB
-                    CS --> EB
-                    EB --> HS
-                    EB --> ES
-                    EB --> CS
-            </div>
-        </div>
 
         <!-- Database Schema -->
         <div class="diagram-section">
