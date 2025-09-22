@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mermaid Diagram Viewer</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .diagram-section {
+            margin: 40px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .diagram-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #555;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 5px;
+        }
+        .mermaid {
+            text-align: center;
+            margin: 20px 0;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+            margin: 20px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .custom-diagram {
+            border: 2px dashed #007bff;
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Multi-Tenant Django ERP System - Architecture Diagrams</h1>
+        
+        <!-- System Architecture Diagram -->
+        <div class="diagram-section">
+            <div class="diagram-title">1. High-Level System Architecture</div>
+            <div class="mermaid">
+                graph TB
+                    subgraph "Client Layer"
+                        A[Web Browser]
+                        B[Mobile App]
+                        C[API Clients]
+                    end
+                    
+                    subgraph "Load Balancer"
+                        LB[Nginx/Load Balancer]
+                    end
+                    
+                    subgraph "Django Application"
+                        subgraph "Core Components"
+                            TM[Tenant Middleware]
+                            AM[Auth Middleware]
+                            PM[Permission Manager]
+                        end
+                        
+                        subgraph "Modules"
+                            AUTH[Authentication]
+                            HRMS[HRMS Module]
+                            ERP[Purchase]
+                            CMS[CMS Module]
+                            LOG[Logging]
+                            INVENTORY[Inventory Management]
+                        end
+                        
+                        subgraph "Services"
+                            ADMIN[Admin Interface]
+                            TASKS[Background Tasks Or Notifications]
+                        end
+                    end
+                    
+                    subgraph "Data Layer"
+                        DB[(PostgreSQL Database)]
+                        REDIS[(Redis and Celery)]
+                    end
+                    
+                    subgraph "External Services"
+                        PAYMENT[Payment Gateway]
+                    end
+                    
+                    A --> LB
+                    B --> LB
+                    C --> LB
+                    LB --> TM
+                    TM --> AM
+                    AM --> PM
+                    PM --> AUTH
+                    PM --> HRMS
+                    PM --> ERP
+                    PM --> CMS
+                    AUTH --> DB
+                    HRMS <--> DB
+                    ERP <--> DB
+                    CMS <--> DB
+                    TASKS --> REDIS
+                    ERP --> PAYMENT
+                    LOG --> DB
+                    ADMIN <--> DB
+                    TASKS <--> DB
+                    INVENTORY <--> DB
+                    PM --> ADMIN
+            </div>
+        </div>
+
+        <!-- Multi-Tenant Data Flow -->
+        <div class="diagram-section">
+            <div class="diagram-title">2. Multi-Tenant Data Flow</div>
+            <div class="mermaid">
+                sequenceDiagram
+                    participant Client
+                    participant Middleware
+                    participant Logger & Fallback
+                    participant TenantResolver
+                    participant AuthService
+                    participant Module
+                    participant Database
+
+                    Middleware->>Logger & Fallback: Log Request
+                    Logger & Fallback-->>Middleware: Log Result
+                    Middleware->>Logger & Fallback: Fallback Mechanism
+                    Logger & Fallback-->>Middleware: Fallback Result
+                    Logger & Fallback-->>TenantResolver: Fallback Log
+
+                    Client->>Middleware: HTTP Request (subdomain.app.com)
+                    Middleware->>TenantResolver: Resolve Tenant
+                    TenantResolver->>Database: Query Tenant by Domain
+                    Database-->>TenantResolver: Tenant Object
+                    TenantResolver-->>Middleware: Set Tenant Context
+                    
+                    Middleware->>AuthService: Authenticate User
+                    AuthService->>Database: Query User (with tenant filter)
+                    Database-->>AuthService: User Object
+                    AuthService-->>Middleware: Authentication Result
+                    
+                    Middleware->>Module: Forward Request
+                    Module->>Database: Query Data (tenant-aware)
+                    Database-->>Module: Filtered Data
+                    Module-->>Client: Response
+            </div>
+        </div>
+
+        <!-- Module Integration -->
+        <div class="diagram-section">
+            <div class="diagram-title">3. Module Integration Architecture</div>
+            <div class="mermaid">
+                graph LR
+                    subgraph "Authentication Core"
+                        AC[Auth Controller]
+                        UP[User Provider]
+                        RP[Role Provider]
+                        PP[Permission Provider]
+                    end
+                    
+                    subgraph "HRMS Module"
+                        HM[HRMS Manager]
+                        HV[HRMS Views]
+                        HS[HRMS Services]
+                    end
+                    
+                    subgraph "ERP Module"
+                        EM[ERP Manager]
+                        EV[ERP Views]
+                        ES[ERP Services]
+                    end
+                    
+                    subgraph "CMS Module"
+                        CM[CMS Manager]
+                        CV[CMS Views]
+                        CS[CMS Services]
+                    end
+                    
+                    subgraph "Event Bus"
+                        EB[Django Signals]
+                    end
+                    
+                    UP --> HM
+                    UP --> EM
+                    UP --> CM
+                    RP --> HV
+                    RP --> EV
+                    RP --> CV
+                    
+                    HS --> EB
+                    ES --> EB
+                    CS --> EB
+                    EB --> HS
+                    EB --> ES
+                    EB --> CS
+            </div>
+        </div>
+
+        <!-- Database Schema -->
+        <div class="diagram-section">
+            <div class="diagram-title">4. Database Schema Overview</div>
+            <div class="mermaid">
+                erDiagram
+                    TENANT {
+                        int id PK
+                        string name
+                        string slug UK
+                        string schema_name UK
+                        string plan
+                        int max_users
+                        boolean is_active
+                        datetime created_at
+                    }
+                    
+                    DOMAIN {
+                        int id PK
+                        int tenant_id FK
+                        string domain UK
+                        boolean is_primary
+                    }
+                    
+                    USER {
+                        int id PK
+                        int tenant_id FK
+                        string username
+                        string email
+                        string first_name
+                        string last_name
+                        boolean is_active
+                        datetime tenant_joined_at
+                    }
+                    
+                    ROLE {
+                        int id PK
+                        int tenant_id FK
+                        string name
+                        string description
+                        string module
+                    }
+                    
+                    USER_ROLE {
+                        int id PK
+                        int tenant_id FK
+                        int user_id FK
+                        int role_id FK
+                        datetime assigned_at
+                    }
+                    
+                    EMPLOYEE {
+                        int id PK
+                        int tenant_id FK
+                        int user_id FK
+                        string employee_id
+                        string department
+                        decimal salary
+                        date hire_date
+                    }
+                    
+                    TENANT ||--o{ DOMAIN : has
+                    TENANT ||--o{ USER : contains
+                    TENANT ||--o{ ROLE : defines
+                    TENANT ||--o{ EMPLOYEE : employs
+                    USER ||--o{ USER_ROLE : has
+                    ROLE ||--o{ USER_ROLE : assigned_to
+                    USER ||--o| EMPLOYEE : profile
+            </div>
+        </div>
+
+        <!-- Custom Diagram Area -->
+        <div class="diagram-section custom-diagram">
+            <div class="diagram-title">5. Custom Diagram Area - Edit and Render Your Own</div>
+            <textarea id="customMermaid" placeholder="Paste your Mermaid code here...">
+graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    D --> A
+            </textarea>
+            <button onclick="renderCustomDiagram()">Render Diagram</button>
+            <div id="customDiagramOutput" class="mermaid"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mermaid
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#007bff',
+                primaryTextColor: '#333',
+                primaryBorderColor: '#007bff',
+                lineColor: '#666',
+                sectionBkgColor: '#f8f9fa',
+                altSectionBkgColor: '#e9ecef',
+                gridColor: '#e1e1e1',
+                secondaryColor: '#28a745',
+                tertiaryColor: '#17a2b8'
+            }
+        });
+
+        // Function to render custom diagram
+        function renderCustomDiagram() {
+            const customCode = document.getElementById('customMermaid').value;
+            const outputDiv = document.getElementById('customDiagramOutput');
+            
+            // Clear previous diagram
+            outputDiv.innerHTML = '';
+            
+            try {
+                // Create a new div for the diagram
+                const diagramDiv = document.createElement('div');
+                diagramDiv.className = 'mermaid';
+                diagramDiv.textContent = customCode;
+                outputDiv.appendChild(diagramDiv);
+                
+                // Re-initialize Mermaid to render the new diagram
+                mermaid.init(undefined, diagramDiv);
+            } catch (error) {
+                outputDiv.innerHTML = '<p style="color: red;">Error rendering diagram: ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
