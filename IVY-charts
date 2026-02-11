@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IVY-Edge Backend - Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: #f8fafc; color: #1e293b; padding: 32px; }
+        h1 { text-align: center; font-size: 26px; color: #0f172a; margin-bottom: 4px; }
+        h2 { text-align: center; font-size: 14px; color: #64748b; font-weight: 400; margin-bottom: 32px; }
+        .section { margin: 32px 0; padding: 28px; background: #fff; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .section h3 { color: #0f172a; margin-bottom: 20px; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
+        .mermaid { display: flex; justify-content: center; overflow-x: auto; }
+        .mermaid .nodeLabel, .mermaid .edgeLabel, .mermaid .label, .mermaid span, .mermaid text, .mermaid .cluster-label { font-size: 16px !important; }
+        .mermaid .nodeLabel p, .mermaid .edgeLabel p { font-size: 16px !important; }
+    </style>
+</head>
+<body>
+    <h1>IVY-Edge Backend — User Journey</h1>
+    <h2>Venture Capital Fund Management Platform</h2>
+
+    <!-- STEP 1: LOGIN -->
+    <div class="section">
+        <h3>Step 1 — User Enters the Portal</h3>
+        <div class="mermaid">
+flowchart LR
+    A["👤 User"] --> B{"Login Method"}
+    B --> C["Email + Password"]
+    B --> D["OTP via Email / Mobile"]
+    B --> E["Gmail OAuth"]
+    C --> F["✅ JWT Token Issued"]
+    D --> F
+    E --> F
+    F --> G["🏠 Dashboard<br/>(Role-based sidebar)"]
+        </div>
+    </div>
+
+    <!-- STEP 2: MODULE CHOICE -->
+    <div class="section">
+        <h3>Step 2 — User Chooses a Module</h3>
+        <div class="mermaid">
+flowchart TB
+    DASH["🏠 Dashboard"] --> INV["📊 Investment<br/>(Deal Pipeline)"]
+    DASH --> INVESTOR["💰 Investors<br/>(LP Management)"]
+    DASH --> FUND["🏦 Funds<br/>(Fund Management)"]
+    DASH --> PORT["🏭 Portfolio<br/>(Company Tracking)"]
+    DASH --> SETTINGS["⚙️ Admin<br/>(RBAC + Access)"]
+        </div>
+    </div>
+
+    <!-- STEP 3A: INVESTMENT MODULE -->
+    <div class="section">
+        <h3>Step 3A — Investment Module (Deals)</h3>
+        <div class="mermaid">
+flowchart TB
+    INV["📊 Investment Module"] --> LIST["Deal List<br/>(Filter, Sort, Search, Pagination)"]
+    INV --> CREATE["Create Deal"]
+    INV --> IMPORT["Bulk Import<br/>(Excel Upload)"]
+    
+    INV --> ANALYTICS["Dashboard Analytics"]
+    INV --> ADVANCE["Advance Stage Deals<br/>(Tranches, DD Vendors)"]
+
+    LIST --> DETAIL["Deal Detail Page"]
+
+    DETAIL --> OVERVIEW["Overview<br/>(Company info, Status,<br/>Fund, Stage, Industry)"]
+    DETAIL --> STAKEHOLDERS["Stakeholders<br/>(Add / Edit / Delete Founders)"]
+    DETAIL --> DOCUMENTS["Documents<br/>(Upload / Download files to S3)"]
+    DETAIL --> NOTES["Notes<br/>(Add notes, Replies,<br/>Sync from Fireflies)"]
+    DETAIL --> TEAM["Team Members<br/>(Assign users to deal)"]
+    DETAIL --> STATUS["Change Status<br/>(Move through pipeline)"]
+
+    CREATE --> MANUAL["Manual Entry<br/>(Fill form fields)"]
+    CREATE --> TYPEFORM["Typeform Webhook<br/>(Auto-create from form)"]
+    CREATE --> TRACXN["Tracxn Enrichment<br/>(Fetch company data)"]
+
+    STATUS --> PIPELINE
+
+    subgraph PIPELINE["Deal Pipeline Stages"]
+        direction LR
+        S1["Outreach"] --> S2["To Be Processed"] --> S3["Partners<br/>Approval"] --> S4["Term Sheet<br/>Issue"] --> S5["TS<br/>Signed"] --> S6["DD / SHA<br/>Nego"] --> S7["CP<br/>Completion"] --> S8["Fund<br/>Disbursed"]
+    end
+        </div>
+    </div>
+
+    <!-- STEP 3B: INVESTOR MODULE -->
+    <div class="section">
+        <h3>Step 3B — Investor Module</h3>
+        <div class="mermaid">
+flowchart TB
+    MOD["💰 Investor Module"] --> LIST["Investor List<br/>(Filter, Sort, Search, Pagination)"]
+    MOD --> CREATE["Create Investor"]
+    MOD --> IMPORT["Bulk Import<br/>(Excel: Investors / Funds / Transactions)"]
+    MOD --> CARDS["Dashboard Cards<br/>(Analytics Summary)"]
+
+    LIST --> DETAIL["Investor Detail Page"]
+
+    DETAIL --> OVERVIEW["Overview<br/>(Investor info, Type,<br/>SEBI Category, Status)"]
+    DETAIL --> OUR_CONTACTS["Our Contacts<br/>(Add / Edit / Delete)"]
+    DETAIL --> INV_CONTACTS["Investor Contacts<br/>(Add / Edit / Delete)"]
+    DETAIL --> INV_FUNDS["Investor Funds<br/>(View / Edit fund allocations)"]
+    DETAIL --> DOCUMENTS["Documents<br/>(Upload / Download files)"]
+    DETAIL --> NOTES["Notes<br/>(Add notes, Replies,<br/>Sync from Fireflies)"]
+
+    INV_FUNDS --> TXN["Fund Transactions<br/>(Drawdowns, Distributions,<br/>Returns — CRUD)"]
+    INV_FUNDS --> SUMMARY["Portfolio Summary<br/>(Per fund performance)"]
+        </div>
+    </div>
+
+    <!-- STEP 3C: FUNDS MODULE -->
+    <div class="section">
+        <h3>Step 3C — Funds Module</h3>
+        <div class="mermaid">
+flowchart TB
+    MOD["🏦 Funds Module"] --> LIST["Fund List"]
+    MOD --> CREATE["Create Fund"]
+    MOD --> IMPORT["Bulk Import<br/>(Excel Upload)"]
+
+    LIST --> DETAIL["Fund Detail Page"]
+
+    DETAIL --> OVERVIEW["Overview<br/>(Name, Category, Currency,<br/>NAV, Tenure, Registration)"]
+    DETAIL --> RATES["Exchange Rates<br/>(Auto-updated daily<br/>via Celery task)"]
+
+    DETAIL -.->|"Linked to"| DEALS["Deals use this Fund"]
+    DETAIL -.->|"Linked to"| INV_FUNDS["Investors allocate to this Fund"]
+        </div>
+    </div>
+
+    <!-- STEP 3D: PORTFOLIO MODULE -->
+    <div class="section">
+        <h3>Step 3D — Portfolio Module</h3>
+        <div class="mermaid">
+flowchart TB
+    MOD["🏭 Portfolio Module"] --> LIST["Portfolio List<br/>(Filter, Sort, Search, Pagination)"]
+    MOD --> CREATE["Create Portfolio Company"]
+    MOD --> ANALYTICS["Dashboard Analytics"]
+
+    LIST --> DETAIL["Portfolio Detail Page"]
+
+    DETAIL --> OVERVIEW["Overview<br/>(Company info, Status,<br/>Investment details)"]
+    DETAIL --> STAKEHOLDERS["Stakeholders<br/>(Add / Edit / Delete people)"]
+    DETAIL --> LOCATIONS["Locations<br/>(Add / Edit / Delete offices)"]
+    DETAIL --> DOCUMENTS["Documents<br/>(Company docs + Investment docs)"]
+    DETAIL --> NOTES["Notes<br/>(Add notes + Replies)"]
+    DETAIL --> REPORTS["Reports"]
+    DETAIL --> GOVERNANCE["Governance"]
+
+    REPORTS --> MIS["MIS Reports<br/>(CRUD + Bulk Import)"]
+    REPORTS --> FINANCIALS["Financials<br/>(Dynamic fields +<br/>Bulk Import + Template)"]
+
+    GOVERNANCE --> CS["CS Conditions<br/>(Track compliance)"]
+    GOVERNANCE --> BOARD["Board Meetings<br/>(Schedule + Minutes)"]
+    GOVERNANCE --> CAP["Cap Table<br/>(Ownership structure +<br/>Bulk Import + Template)"]
+        </div>
+    </div>
+
+    <!-- STEP 3E: SETTINGS -->
+    <div class="section">
+        <h3>Step 3E — Admin (RBAC & Access Control)</h3>
+        <div class="mermaid">
+flowchart TB
+    MOD["⚙️ Settings"] --> ROLES["Roles Management"]
+    MOD --> ACCESS["Access Control"]
+    MOD --> PROFILE["User Profile"]
+
+    ROLES --> R1["Create Role<br/>(Name + Description)"]
+    ROLES --> R2["Assign Modules<br/>(Investment, Investor, etc.)"]
+    ROLES --> R3["Assign Permissions<br/>(View, Create, Edit, Delete<br/>per module / sub-module)"]
+
+    ACCESS --> A1["View All Users"]
+    ACCESS --> A2["Add User Access<br/>(Create user if new +<br/>Assign role + Send email)"]
+    ACCESS --> A3["Update User Access<br/>(Change role / details)"]
+    ACCESS --> A4["Remove User Access"]
+
+    PROFILE --> P1["View Profile<br/>(With sidebar based on role)"]
+    PROFILE --> P2["Update Profile"]
+    PROFILE --> P3["Change Password"]
+        </div>
+    </div>
+
+
+    <!-- STEP 5: THIRD PARTY INTEGRATIONS -->
+    <div class="section">
+        <h3>Step 4 — Third-Party Integrations</h3>
+        <div class="mermaid">
+flowchart LR
+    subgraph TRACXN["🔍 Tracxn"]
+        T1["Fetch company data<br/>(funding, team, industry)"]
+        T2["Lookup company domain"]
+    end
+
+    subgraph FIREFLIES["🎙️ Fireflies.ai"]
+        F1["Fetch meeting transcripts<br/>via GraphQL API"]
+        F2["Auto-create notes<br/>from meetings"]
+    end
+
+    subgraph GMAIL["✉️ Gmail API"]
+        G1["OAuth login"]
+        G2["Sync emails by label<br/>for Deals / Investors / Portfolio"]
+    end
+
+    subgraph ZOHO["📋 Zoho"]
+        Z1["Lookup DD vendors<br/>for advance stage deals"]
+    end
+
+    subgraph AWS["☁️ AWS Services"]
+        A1["S3: File storage<br/>+ pre-signed downloads"]
+        A2["SES: Send emails<br/>(OTP, notifications)"]
+        A3["QuickSight: Embedded<br/>analytics dashboard"]
+    end
+
+    subgraph CELERY["⏰ Celery + Redis"]
+        C1["Bulk import processing"]
+        C2["Exchange rate auto-update"]
+    end
+
+    T1 -->|"used by"| DEALS["Investment Module"]
+    F2 -->|"used by"| NOTES["Notes Module"]
+    G2 -->|"used by"| ALL["All Modules"]
+    Z1 -->|"used by"| DEALS
+    A1 -->|"used by"| DOCS["Documents Module"]
+    A2 -->|"used by"| AUTH["User Module"]
+    A3 -->|"used by"| DEALS
+    C1 -->|"used by"| ALL
+    C2 -->|"used by"| FUNDS["Funds Module"]
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                fontSize: '16px',
+                primaryColor: '#dbeafe',
+                primaryBorderColor: '#3b82f6',
+                primaryTextColor: '#1e293b',
+                lineColor: '#94a3b8',
+                secondaryColor: '#f0fdf4',
+                tertiaryColor: '#fef3c7',
+            },
+            flowchart: { htmlLabels: true, curve: 'basis', nodeSpacing: 30, rankSpacing: 50 }
+        });
+    </script>
+</body>
+</html>
